@@ -2,6 +2,7 @@ import secrets
 import codecs
 import hashlib
 import ecdsa
+from ecdsa.ecdsa import Public_key
 
 # -----------------------------------------------------------------------------------------------------------------------
 # The first step is creating a private key. use secrets library in python for creating a random 256-bit number
@@ -10,7 +11,6 @@ private_key_intiger = secrets.randbits(256)
 private_key_hex_format = hex(private_key_intiger)
 # This is my final private key that i use for creating public key
 private_key = private_key_hex_format[2:]
-print(private_key)
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -54,10 +54,6 @@ def create_compressed_public_key_from_private(private_key):
     bitcoin_byte = b'02' if last_byte % 2 == 0 else b'03'
     public_key = bitcoin_byte + key_half
     return public_key
-
-
-print((create_uncompressed_public_key_from_private(private_key)))
-print((create_compressed_public_key_from_private(private_key)))
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -118,4 +114,17 @@ def base58(address_hex):
     return b58_string
 
 
-print(create_address_from_public_key(compressed_public_key))
+def create_address():
+    private_key = hex(secrets.randbits(256))[2:]
+    public_key = create_compressed_public_key_from_private(private_key)
+    address = create_address_from_public_key(public_key)
+    print("Private key => ", private_key)
+    print("Public key => ", public_key)
+    print("Address => ", address)
+    print("=============================================================================")
+
+
+print("Sender Address")
+create_address()
+print("Receiver Address")
+create_address()
