@@ -129,7 +129,7 @@ def create_address():
 '''Next step after creating addresses is Creating a transaction. Creating a transaction required to have funds in your address for that purpose you can use a bitcoin testnet faucet
 # 1. raw tx
 # 2. raw tx and sign that tx using my private key 
-# 3. raw tx and signature in order to create the real tx  '''
+# 3. raw tx and signature in order to create the real tx (raw tx means that a tx created but it does not contain private key) '''
 
 sender_addr = 'sender_address'
 sender_hashed_pubkey = base58.b58decode_check(sender_addr)[1:].hex()
@@ -142,13 +142,17 @@ receiver_hashed_pubkey = base58.b58decode_check(
 prv_txid = 'previous transaction id'
 
 
+
 class raw_tx:
+    # < here means Little endian and L means integer size 4
     version = struct.pack("<L", 1)
+    # < here means Little endian and B means integer size 1
     tx_in_count = struct.pack("<B", 1)
-    tx_in = {}  # TEMP
+    tx_in = {}  # TEMP because we consider one input for this tx
     tx_out_count = struct.pack("<B", 2)
     tx_out1 = {}  # TEMP
     tx_out2 = {}  # TEMP
+    # 0 means ignore this lock time and do it immediately
     lock_time = struct.pack("<L", 0)
 
 # We use this function for flip bytes because of little endian and big endian
@@ -162,23 +166,28 @@ def flip_byte_order(string):
 
 rtx = raw_tx()  # Create a new child from raw_tx class
 
-rtx.tx_in["txouthash"] = codecs.decode(flip_byte_order(prv_txid), 'hex')
-rtx.tx_in["tx_out_index"] = struct.pack("<L", 0)
+rtx.tx_in["txouthash"] = codecs.decode(
+    flip_byte_order(prv_txid), 'hex')  # txouthash or outpoint / prv_txid is in big endian form so we should flip it and change it to little endian
+# each tx has outputs this index will shown the output that we are looking for
+rtx.tx_in["tx_out_index"] = struct.pack("<L", 1)
 rtx.tx_in["script"] = codecs.decode(
-    "76a914"+sender_hashed_pubkey+"88ac", 'hex')
-rtx.tx_in["scrip_bytes"] = struct.pack("<B", len(rtx.tx_in["script"]))
+    "76a91C"+sender_hashed_pubkey+"88ac", 'hex')
+rtx.tx_in["scrip_bytes"] = struct.pack(
+    "<B", len(rtx.tx_in["script"]))  # len of script
 rtx.tx_in["sequence"] = codecs.decode("ffffffff", 'hex')
 
 
+# Sending 50000 satoshi to receiver < here means Little endian and Q means integer size 8
 rtx.tx_out1["value"] = struct.pack("<Q", 50000)
 rtx.tx_out1["pk_script"] = codecs.decode(
-    "76a914"+receiver_hashed_pubkey+"88ac", 'hex')
+    "76a91C"+receiver_hashed_pubkey+"88ac", 'hex')
 rtx.tx_out1["pk_script_bytes"] = struct.pack(
     "<B", len(rtx.tx_out1["pk_script"]))
 
+# Sending 40000 satoshi back to sender
 rtx.tx_out2["value"] = struct.pack("<Q", 40000)
 rtx.tx_out2["pk_script"] = codecs.decode(
-    "76a914"+sender_hashed_pubkey+"88ac", 'hex')
+    "76a91C"+sender_hashed_pubkey+"88ac", 'hex')
 rtx.tx_out2["pk_script_bytes"] = struct.pack(
     "<B", len(rtx.tx_out2["pk_script"]))
 
